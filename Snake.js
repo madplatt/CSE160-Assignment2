@@ -207,10 +207,7 @@ class Snake {
     }
 }
 
-
 function drawTriangle3D(vertices) {
-    var n = 3;
-
     var vBuffer = gl.createBuffer();
     if (!vBuffer)   {
         console.log('Failed to create triangle buffer');
@@ -224,5 +221,5 @@ function drawTriangle3D(vertices) {
 
     gl.enableVertexAttribArray(a_Position); 
 
-    gl.drawArrays(gl.TRIANGLES, 0, n);
+    gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
 }

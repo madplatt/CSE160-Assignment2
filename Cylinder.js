@@ -16,24 +16,28 @@ class Cylinder {
         var drawSize = 1;
         var segments = this.segments;
         let alpha = 2 * Math.PI / segments;
+        var vertices = [];
         for (var angle = 0; angle < 2 * Math.PI; angle = angle + alpha)
         {
             let angle1 = angle;
             let angle2 = angle + alpha;
             let pt1 = [Math.cos(angle1) * drawSize, Math.sin(angle1) * drawSize];
             let pt2 = [Math.cos(angle2) * drawSize, Math.sin(angle2) * drawSize];
-            drawTriangle3D([0,0,0,  pt1[0],pt1[1],0,  pt2[0],pt2[1],0]);
-            drawTriangle3D([0,0,1,  pt1[0],pt1[1],1,  pt2[0],pt2[1],1]);
+            vertices.push(0,0,0,  pt1[0],pt1[1],0,  pt2[0],pt2[1],0);
+            vertices.push(0,0,1,  pt1[0],pt1[1],1,  pt2[0],pt2[1],1);
+            //drawTriangle3D([0,0,0,  pt1[0],pt1[1],0,  pt2[0],pt2[1],0]);
+            //drawTriangle3D([0,0,1,  pt1[0],pt1[1],1,  pt2[0],pt2[1],1]);
 
-            drawTriangle3D([pt1[0],pt1[1],0,  pt1[0],pt1[1],1, pt2[0],pt2[1],0]);
-            drawTriangle3D([pt1[0],pt1[1],1,  pt2[0],pt2[1],1, pt2[0],pt2[1],0]);
+            vertices.push(pt1[0],pt1[1],0,  pt1[0],pt1[1],1, pt2[0],pt2[1],0);
+            vertices.push(pt1[0],pt1[1],1,  pt2[0],pt2[1],1, pt2[0],pt2[1],0);
+            //drawTriangle3D([pt1[0],pt1[1],0,  pt1[0],pt1[1],1, pt2[0],pt2[1],0]);
+            //drawTriangle3D([pt1[0],pt1[1],1,  pt2[0],pt2[1],1, pt2[0],pt2[1],0]);
         }
+        drawTriangle3D(vertices);
     }
 }
 
 function drawTriangle3D(vertices) {
-    var n = 3;
-
     var vBuffer = gl.createBuffer();
     if (!vBuffer)   {
         console.log('Failed to create triangle buffer');
@@ -47,5 +51,5 @@ function drawTriangle3D(vertices) {
 
     gl.enableVertexAttribArray(a_Position); 
 
-    gl.drawArrays(gl.TRIANGLES, 0, n);
+    gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
 }

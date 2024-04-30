@@ -66,7 +66,7 @@ function tick()
         g_fps = (g_frameCount + g_oldFrameCount) / 2
         g_oldFrameCount = g_frameCount;
         g_frameCount = 0;
-        console.log("Time: " + sec + "  FPS: " + g_fps);
+        console.log("FPS: " + g_fps);
     }
     
     g_secondsPassed = performance.now()/1000.0 - g_startTime;
