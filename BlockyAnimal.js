@@ -20,20 +20,30 @@ var FSHADER_SOURCE = `
 // Global Variables
 let canvas;
 let gl;
+let ANIM_1 = 1;
+let ANIM_2 = 2;
+
 let a_Position;
 let u_FragColor;
 let u_ModelMatrix;
 let u_GlobalRotationMatrix;
-let u_Size;
-var g_shapesList = [];
-var g_selectedType = POINT;
-var g_globalAngle = 0;
+var g_objList = [];
+var g_globalAngleX = 0;
+var g_globalAngleY = 0;
+var g_animDisabled = false;
+var g_j1Angle = 0;
+var g_j2Angle = 1;
+var g_startTime = performance.now()/1000.0;
+var g_secondsPassed = performance.now()/1000.0 - g_startTime;
+var g_fps;
+var g_oldFrameCount = 0, g_frameCount = 0;
 
 function main() {
     setupWebGL();
     connectVariablesToGLSL();
+    setupHTMLElements();
     
-    //canvas.onmousedown = function(ev){ click(ev) }
+    canvas.onmousedown = function(ev){ clickRotate(ev) }
     //canvas.onmousemove = function(ev){ click(ev) }
 
     // Set the color for clearing <canvas>
@@ -41,8 +51,33 @@ function main() {
 
     // Clear <canvas>
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    renderAllShapes();
+    var snake = new Snake();
+    g_objList.push(snake);
+
+    requestAnimationFrame(tick);
 }
+
+let sec = 0;
+function tick()
+{
+    if (Math.round(g_secondsPassed) != sec)
+    {
+        sec = Math.round(g_secondsPassed);
+        g_fps = (g_frameCount + g_oldFrameCount) / 2
+        g_oldFrameCount = g_frameCount;
+        g_frameCount = 0;
+        console.log("Time: " + sec + "  FPS: " + g_fps);
+    }
+    
+    g_secondsPassed = performance.now()/1000.0 - g_startTime;
+
+    renderAllObjects();
+    updateAllObjects();
+    g_frameCount++;
+    requestAnimationFrame(tick);
+    
+}
+
 
 function setupWebGL() {
     // Retrieve <canvas> element
@@ -56,14 +91,8 @@ function setupWebGL() {
     }
 
     gl.enable(gl.DEPTH_TEST);
-    
-    const camSlider = document.getElementById("camSlider");
-    if (!camSlider) {
-        console.log('Failed to retrieve the camSlider element');
-        return;
-    }
-    camSlider.addEventListener("mousemove", function() {g_globalAngle = this.value; renderAllShapes();});
 }
+
 function connectVariablesToGLSL() {
     // Initialize shaders
     if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
@@ -97,26 +126,69 @@ function connectVariablesToGLSL() {
         return;
     }
 }
-function renderAllShapes() {
-    var grm = new Matrix4().rotate(g_globalAngle,0,1,0);
-    gl.uniformMatrix4fv(u_GlobalRotationMatrix, false, grm.elements);
+
+function setupHTMLElements() {
+    const camSlider = document.getElementById("camSlider");
+    if (!camSlider) {
+        console.log('Failed to retrieve the camSlider element');
+        return;
+    }
+    camSlider.addEventListener("mousemove", function() {g_globalAngleX = this.value; });
+
+    const j1Slider = document.getElementById("j1Slider");
+    if (!j1Slider) {
+        console.log('Failed to retrieve the j1Slider element');
+        return;
+    }
+    j1Slider.addEventListener("mousemove", function() {g_j1Angle = this.value; });
+
+    const j2Slider = document.getElementById("j2Slider");
+    if (!j2Slider) {
+        console.log('Failed to retrieve the j2Slider element');
+        return;
+    }
+    j2Slider.addEventListener("mousemove", function() {g_j2Angle = this.value; });
+
+    const toggleButton = document.getElementById("toggleButton");
+    if (!toggleButton) {
+        console.log('Failed to retrieve the toggleButton element');
+        return;
+    }
+    toggleButton.addEventListener("click", function() {g_animDisabled = !(g_animDisabled); });
+
+}
+
+function clickRotate(ev) {
+    var x = ev.clientX;
+    var y = ev.clientY;
+    var rect = ev.target.getBoundingClientRect();
+
+    x = ((x - rect.left) - canvas.width/2) / (canvas.width / 2);
+    y = (canvas.height / 2 - (y - rect.top)) / (canvas.height / 2);
+    g_globalAngleX = 90 * x;
+    g_globalAngleY = 90 * y;
+}
 
 
+function renderAllObjects() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    //var len = g_shapesList.length;
-    //for (var i = 0; i < len; i++)  {
-    //    g_shapesList[i].render();
-    //}
-
-    var body = new Cube();
-
-    body.color = [1,0,0,1];
-    body.matrix.translate(-.1, -.1, -.1);
-    body.matrix.rotate(25,1,0,0);
-    body.matrix.scale(.2,.2,.2);
     
+    var len = g_objList.length;
+    //console.log("Num Shapes " + len);
+    for (var i = 0; i < len; i++)  {
+        g_objList[i].render();
+    }
+    
+} 
 
-
-    //body.matrix.scale(.25, .7, .5);
-    body.render();
+function updateAllObjects() {
+    var grm = new Matrix4().rotate(-g_globalAngleX,0,1,0);
+    grm.rotate(g_globalAngleY,1,0,0);
+    gl.uniformMatrix4fv(u_GlobalRotationMatrix, false, grm.elements);
+    
+    var len = g_objList.length;
+    //console.log("Num Shapes " + len);
+    for (var i = 0; i < len; i++)  {
+        g_objList[i].update();
+    }  
 } 
